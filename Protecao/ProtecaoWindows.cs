@@ -43,6 +43,61 @@ namespace App_Senha
             }
         }
 
+        public static void CriptografarPasta(string caminhoPasta)
+        {
+            if (string.IsNullOrWhiteSpace(caminhoPasta) || !Directory.Exists(caminhoPasta))
+            {
+                MessageBox.Show("Erro: Caminho da pasta inválido ou a pasta não existe.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c cipher /E /S:\"{caminhoPasta}\"",
+                Verb = "runas",
+                UseShellExecute = true,
+                CreateNoWindow = true
+            };
+
+            try
+            {
+                Process processo = Process.Start(psi);
+                processo.WaitForExit();
+                if (processo.ExitCode == 0)
+                {
+                    MessageBox.Show("Pasta criptografada com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show($"Falha na criptografia da pasta. Código de saída: {processo.ExitCode}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao criptografar a pasta: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+
+        /// <summary>
+        /// Descriptografa a pasta removendo o bloqueio, sem exigir senha.
+        /// </summary>
+        public static void DescriptografarPasta(string caminhoPasta)
+        {
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c cipher /D /S:\"{caminhoPasta}\"",
+                Verb = "runas",
+                UseShellExecute = true
+            };
+
+            Process processo = Process.Start(psi);
+            processo.WaitForExit();
+
+            Console.WriteLine("Pasta descriptografada! Agora está acessível.");
+        }
 
         // Lê o caminho do programa a partir do arquivo de configuração (config.txt)
         private static string CarregarProgramaBloqueado()
@@ -63,6 +118,42 @@ namespace App_Senha
 
             return null;
         }
+
+        public static void RestaurarPermissoes(string caminhoPasta)
+        {
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                // O comando abaixo faz um reset nas permissões da pasta
+                Arguments = $"/c icacls \"{caminhoPasta}\" /reset",
+                Verb = "runas", // Necessário para executar com privilégios de administrador
+                UseShellExecute = true,
+                CreateNoWindow = true
+            };
+
+            try
+            {
+                Process processo = Process.Start(psi);
+                processo.WaitForExit();
+
+                if (processo.ExitCode == 0)
+                {
+                    MessageBox.Show("Permissões restauradas com sucesso! Agora a pasta está acessível.",
+                                    "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show($"Falha ao restaurar as permissões. Código de saída: {processo.ExitCode}",
+                                    "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao restaurar as permissões: {ex.Message}",
+                                "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
 
         public static void BloquearPrograma(string caminhoPrograma)
         {
