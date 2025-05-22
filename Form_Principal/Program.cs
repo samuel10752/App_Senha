@@ -20,7 +20,7 @@ namespace App_Senha
             }
             else
             {
-                MessageBox.Show("Acesso negado!");
+                Application.Exit();
             }
         }
     }
